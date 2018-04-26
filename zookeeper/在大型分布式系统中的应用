@@ -1,0 +1,57 @@
+Hadoop  核心是HDFS和MapReduce，分别提供了对海量数据的存储能力和计算能力
+zookeeper主要用于实现HA（High Availability）
+YARN的ResourceManager基于zookeeper的ActiveStandbyElector组件来确定RM的状态：Active或Standby
+Fencing(隔离):
+  脑裂（Brain-Split）：
+  在分布式环境中，经常会出现单机“假死”的情况，所谓的“假死”是指机器由于网络闪断或是其自身由于负载过高（常见的有GC占用时间过长或CPU的负载过高等）而导致无法正常的对外进行及时响应
+  此时，当RM1“假死”，zookeeper会以为RM1挂了，RM2就会切换为Active状态，当RM1恢复正常，仍然以为自己处于Active状态，就会出现“脑裂”;
+  解决方法：
+  锁节点要带zookeeper的ACL信息，只有创建锁节点的RM有更新数据的权限，就可以独占该锁节点，RM1发现自己没有权限就会自动切换为Standby
+  
+  
+  
+HBase（Hadoop Database）  是一个基于Hadoop文件系统设计的面向海量数据的高可靠性、高性能、面向列、可伸缩的分布式存储系统
+数据写入具有强一致的特性，甚至包括索引列也都实现了强一致性
+zookeeper负责分布式协调工作，是串联起HBase集群和Client的关键所在。
+系统冗错
+   HBase启动的时候每个 RegionServier要在zookeeper固定节点下注册一个rs状态节点，HMaster对这些节点进行监听，当一个RS挂了，zookeeper会通知HM，
+   HM会将该HR所处理的数据分片（Region）重新路由到其他节点上，并记录到Meta信息中供客户端查询。
+RootRegion管理
+  数据存储的位置信息记录在RootRegion上，RootRegion自身的位置记录在zookeeper上
+Region状态管理
+  Region是HBase种数据的物理切片，不同Region之间数据互不重复，Region状态可能会经常变更，状态管理要依靠zookeeper
+分布式SplitLog任务管理
+  当某台RS挂了，总有一部分新写入的数据还没有持久化到HFile，需要从HLog中恢复这部分还在内存中的数据，其中最关键的一步就是SplitLog，即HM需要遍历该RS的HLog
+  并按Region切分成小块移到新地址下，并进行数据Replay，一个RS上可能有数千个Region，上GB的日志，所以需要多个RS共同处理HLog，HM会在zookeeper上创建一个splitlog的节点
+  将“哪个RS处理哪个Region”以列表的形式存在该节点上，然后各个RS到该节点上领取任务并在执行成功或失败后更新节点信息，以通知HM
+Replication管理 
+  Replication实现HBase中主备集群间的实时同步，做法是在zookeeper上记录一个replication节点，然后把不同的RS对应的HLog文件名称记录到相应的节点上，
+  HM会将新增的数据推送给slave集群，并同时将推送信息（“断点记录”）记录到zookeeper上，当推送HLog数据的服务器挂掉时，
+  HM根据这些断点信息来协调用来推送HLog数据的主节点服务器，就可以继续复制了
+  
+kafka 
+  主要用于实现低延迟的发送和收集大量的事件和日志数据，吞吐量极高，是典型的发布于订阅模式系统，在kafaka集群中，没有“中心主节点”，所有的服务器都是对等的
+  消息分区，一个topic可以分为多个区，分别由多台服务器提供，一天服务器可以提供多个区
+  broker，kafka服务器
+  group,消费者分组，多个消费者可以共同消费一个Topic下的消息，每个消费者只消费其中的部分消息 ，这些消费者就组成一个分组
+  offset，消费者从broker上拉去消息的时候需要知道消息在文件中的偏移量
+  
+  zookeeper进行broker的管理，通过zookeeper上broker节点的变化情况来动态表征broker服务器的可用性
+  zookeeper维护分区信息和broker的对应关系，由专门的节点记录，称为topic节点，broker启动以后会到对应的topic节点下注册，并写入针对该topic的分区数
+  zookeeper负责负载均衡，
+    生产者的负载均衡：生产者对“broker的新增与减少”、“topic的新增与减少”、“broker和topic关联关系的变化”等时间注册watcher监听。
+    消费者的负载均衡，可以看做是同一个消费者分组内部的消息消费策略，zookeeper上记录下消息分区与消费者之间的对应关系，每一个消费者一旦确定了对一个消息分区的消费权利，
+    那么需要将其comsumer ID 写入到对应分区的临时节点上
+  zookeeper上记录offset，由消费者定时的将分区消息的消费进度写上去
+  消费者注册
+    每个消费者server启动的时候要到zookeeper上注册，将自己订阅的topic写入该节点，并监听同组的消费者变化，一旦有变化就要出发消费者负载均衡
+    对broker的变化监听，根据情况判断是否进行消费者负载均衡
+    
+  
+  
+  
+
+   
+  
+
+ 
