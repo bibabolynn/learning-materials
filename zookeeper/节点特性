@@ -21,3 +21,9 @@ aclVersion	 数据节点的ACL版本号
 ephemeralOwner 	 如果节点是临时节点，则表示创建该节点的会话的SessionID；如果节点是持久节点，则该属性值为0
 dataLength	 数据内容的长度
 numChildren	 数据节点当前的子节点个数
+
+
+版本  相当于乐观锁，保证分布式数据原子性操作
+version：数据内容，版本
+cversion：子节点列表，版本
+aversion：ACL 权限，版本
