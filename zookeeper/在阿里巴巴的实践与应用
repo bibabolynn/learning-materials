@@ -38,7 +38,32 @@ Otter 分布式数据库同步系统  致力于异地双A机房的数据库准�
   如果在美国、杭州、青岛各有一组集群，杭州可以部署leader/follower，处理所有的事务请求，其他部署observer模式，处理当地的所有非事务请求，减少网络延迟的影响
   当地的事务请求转发给杭州机房，事务请求的都在一个机房内部完成也会大大提升集群对事务请求的处理能力
   
-终搜：轻量级分布式通用搜索平台
+JStorm 实时计算引擎
+是一个类似于map reduce 的分布式任务调度系统，用户按照指定的接口编写一个任务程序，然后将这个任务程序提交给JStorm系统，JStorm会负责7X24小时运行并调度该任务
+广泛应用于日志分析、消息转化和统计分析器等一系列无状态的实时计算系统
+依赖zookeeper实现诸如同步心跳、同步任务配置和调度器选举等
+核心部分：
+  Nimbus是任务的中央调度器
+  supervisor是worker的代理角色，负责管理worker的生命周期
+  worker是task的容器
+  task对应每一个任务的真正执行体
+  zookeeper是整个系统中的协调者
+  
+同步心跳：
+  # worker想supervisor汇报心跳
+  # supervisor向Nimbus汇报心跳
+  # task向Nimbus汇报心跳
+  后两种是通过zookeeper来实现的
+  supervisor每隔10s就会将自己拥有的资源数同步到zookeeper的/supervisors节点上，Nimbus可以通过查询这些节点来检测有哪些机器是活着的
+  task每隔10s就会将自己的心跳和运行状态同步到zookeeper的/tasks节点上，Nimbus一旦检查到某个task心跳超时，则会对该task执行reassign动作
+  
+同步任务配置：
+  提交任务：
+  同步Topology
+  
+  
+
+
   
 
 
