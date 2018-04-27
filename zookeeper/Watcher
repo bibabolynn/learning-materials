@@ -1,0 +1,2 @@
+客户端在向zookeeper服务器注册watcher的同时，会将watcher对象存储在客户端的watchermanager中，
+当zookeeper服务器触发watcher事件以后，会像客户端发送通知，客户端线程从watchermanager中取出对应的watcher对象来执行回调逻辑
