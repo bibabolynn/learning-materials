@@ -1,0 +1,23 @@
+节点类型：
+ 持久节点 PERSISTENT
+ 持久顺序节点 PERSISTENT——SEQUENTIAL
+ 临时节点 EPHEMERAL
+ 临时顺序节点 EPHEMERAL——SEQUENTIAL
+ 
+ 顺序性：每个父节点都会为它的第一级子节点维护一份顺序，用于记录每个子节点创建的先后顺序
+ 
+状态信息
+  每个节点可以写入数据，还可以创建子节点，还会存储本身的一些创建信息
+  
+状态属性	说明
+cZxid	 数据节点创建时的事务ID
+ctime	 数据节点创建时的时间
+mZxid	 数据节点最后一次更新时的事务ID
+mtime	 数据节点最后一次更新时的时间
+pZxid	 数据节点的子节点列表最后一次被修改（是子节点列表变更，而不是子节点内容变更）时的事务ID
+cversion	 子节点的版本号
+dataVersion	 数据节点的版本号
+aclVersion	 数据节点的ACL版本号 
+ephemeralOwner 	 如果节点是临时节点，则表示创建该节点的会话的SessionID；如果节点是持久节点，则该属性值为0
+dataLength	 数据内容的长度
+numChildren	 数据节点当前的子节点个数
