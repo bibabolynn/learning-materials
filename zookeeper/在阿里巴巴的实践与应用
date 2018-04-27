@@ -17,6 +17,33 @@ Dubbo
   基于zookeeper实现服务注册中心，用于服务的注册和订阅。
   基于zookeeper实现的注册中心节点结构示意图见issues（搜索 dubbo 和 zookeeper）
   
+Canal 基于MySQL Binlog 的增量订阅和消费组件
+   工作原理：模拟 MySQL slave的交互协议，将自己伪装为一个MySQL的slave机器，然后不断的向master发送dump请求，
+   master收到dump请求后就会将相应的binary log 推送给该slave，
+   canal收到binary log 后就可以进行二次消费了
+   
+   主备切换
+   为了减少canal server的dump请求对于MySQL master所带来的性能影响，要求不同的canal server 上的instance在同一时刻只能有一个处于running状态
+   依赖zookeeper实现主备切换机制：
+     每个canal server 在启动canal instance的时候想zookeeper创建一个相同的节点，创建成功了，则把机器信息写入该节点，
+     然后启动canal instance，不成功就standby，并监听该节点
+     解决“假死”：standby 的canal server在收到running节点释放的通知后，会延迟一段时间抢占running节点，而原running节点不需要等待延迟。延迟默认5s
+   canal client 从zookeeper 找到running的机器，监听running节点
+   数据消费节点的记录：防止canal client的重启或其他变化导致数据消费的重复性和顺序错乱
+    canal server 会记录最后一次消费成功的binary log 位点
+    
+Otter 分布式数据库同步系统  致力于异地双A机房的数据库准实时数据同步
+  zookeeper负责分布式协调，需要面向全球机房服务，保证读写数据的一致性
+  zookeerper在3.3.0新增了observer模式，该角色提供只读服务，不参与事务请求的投票，
+  如果在美国、杭州、青岛各有一组集群，杭州可以部署leader/follower，处理所有的事务请求，其他部署observer模式，处理当地的所有非事务请求，减少网络延迟的影响
+  当地的事务请求转发给杭州机房，事务请求的都在一个机房内部完成也会大大提升集群对事务请求的处理能力
+  
+终搜：轻量级分布式通用搜索平台
+  
+
+
+
+  
   
   
 
