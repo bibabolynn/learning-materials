@@ -1,2 +1,13 @@
 客户端在向zookeeper服务器注册watcher的同时，会将watcher对象存储在客户端的watchermanager中，
 当zookeeper服务器触发watcher事件以后，会像客户端发送通知，客户端线程从watchermanager中取出对应的watcher对象来执行回调逻辑
+
+zookeeper只会发送变更通知，包括 keeperState,EventType,触发条件，客户端需要回调来查询具体变更内容
+keeperState                    EventType                            触发条件                                         说明
+KeeperState.Disconnected(0)    EventType.None(-1)                   一般是在与服务器断开连接的时候，客户端会收到这个事件。   此时客户端处于断开连接状态，和ZK集群都没有建立连接。
+KeeperState. SyncConnected(3)  EventType.None(-1)                   客户端与服务器成功建立会话之后，会收到这个通知。
+                               EventType. NodeCreated (1)           所关注的节点被创建。
+                               EventType. NodeDeleted (2)           所关注的节点被删除。
+                               EventType. NodeDataChanged (3)       所关注的节点的内容有更新。注意，这个地方说的内容是指数据的版本号dataVersion。因此，即使使用相同的数据内容来更新，还是会收到这个事件通知的。无论如何，调用了更新接口，就一定会更新dataVersion的。
+                               EventType. NodeChildrenChanged (4)   所关注的节点的子节点有变化。这里说的变化是指子节点的个数和组成，具体到子节点内容的变化是不会通知的。
+KeeperState. AuthFailed(4)     EventType.None(-1)                   权限失败
+KeeperState. Expired(-112)     EventType.None(-1)                   会话超时
