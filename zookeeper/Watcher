@@ -11,3 +11,14 @@ KeeperState. SyncConnected(3)  EventType.None(-1)                   客户端与
                                EventType. NodeChildrenChanged (4)   所关注的节点的子节点有变化。这里说的变化是指子节点的个数和组成，具体到子节点内容的变化是不会通知的。
 KeeperState. AuthFailed(4)     EventType.None(-1)                   权限失败
 KeeperState. Expired(-112)     EventType.None(-1)                   会话超时
+
+
+
+watcher特性
+一次性
+ 无论是服务端还是客户端，一旦一个watcher被触发，zookeeper都会将其从相应的存储中移除，所以要反复注册
+客户端串行执行
+  客户端watcher回调的过程是一个串行同步的过程，这为我们保证了顺序，但是要注意千万不要让一个watcher的处理逻辑影响了整个客户端的watcher回调
+轻量 
+  zookeeper通知中只包括 keeperState,EventType,触发条件，客户端需要回调来查询具体变更内容
+  客户端向服务端注册watcher，并不会把客户端真实的watcher对象传递到服务端，仅仅是在客户端请求中使用boolean类型属性进行了标记，同时服务端也仅仅是保存了当前连接的ServerCnxn对象
