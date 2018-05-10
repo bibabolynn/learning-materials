@@ -1,0 +1,78 @@
+没有tag   ---> 但是支持过滤 消息过滤采用的方式类似是在订单上打标签的方式 ，例如 message.setAttribute("wareId", "000001");
+ 标签内容匹配方式采用的是标准SQL-92，和数据库的SQL语法一样，如下：
+
+------------
+| message |
+|----------| a > 5 AND b = 'abc'
+| a = 10 | --------------------> Gotten
+| b = 'abc'|
+| c = true |
+------------
+------------
+| message |
+|----------| a > 5 AND b = 'abc'
+| a = 1 | --------------------> Missed
+| b = 'abc'|
+| c = true |
+------------
+ 4.1 生产的例子  
+protected void sendSelect(int i) throws JMQException {
+    Message message = new Message(topic, "select msg" + i, "业务ID" + i);
+    message.setAttribute("a", "2");
+   
+    producer.send(message);
+}
+    4.2 消费的例子
+            消费的例子有两种，一种是直接调用consumer的API的方式，另一种是注入Spring的方式。
+
+           4.2.1 API方式
+public void testMessageSelectConsumer() throws Exception {
+    //启动消费者
+    messageConsumer.start();
+    //订阅主题
+    messageConsumer.subscribe(topic,"a between 1 and 10",attrFilterMessageListener);
+    // do others
+}
+
+           4.2.2 Spring方式
+<jmq:consumer id="consumer" transport="jmq.transport" longPull="5000" pullTimeout="10000">
+    <jmq:listener topic="yourTopic" selector="a=1''" listener="messageListener"  maxConcurrent="10" minConcurrent="5"/>
+</jmq:consumer>
+
+
+有messageId
+有businessId 业务ID
+
+没有produceID  consumerID  都靠topic
+
+异常的处理
+1.发送方
+发送方发送消息过程中出现异常，业务程序应当重发此条消息。
+
+2.消费方
+JMQ的对于消费者抛出业务逻辑的异常会进行重试处理，重试分为两个阶段：本地重试和服务端重发。
+
+本地重试指如果业务方抛出异常JMQ客户端会会在本地尝试消费一定的次数（默认是3次），如果本地重试几次不成功，客户端向服务端返回失败信息，服务端会在一定时间重新将失败消息推送给客户端。
+业务方需要按照业务逻辑做好防止重复消费的处理，不要依赖消息系统生成的属性，这些属性值有可能会被调整（包括messageId），比如生产者挂了，再次回复后重发时，messageID可能会不一样
+
+
+批量发送和消费，消费者为拉模式
+分为监听模式和拉取模式
+监听模式由JMQ客户端守护线程去不停的拉取消息进行消费，拉取模式由用户控制拉取的频率，不主动调用就不会消费消息。但是都不需要主动对消息进行确认
+拉取模式指用户在代码里主动调用pull方法，不需要在配置文件里面再配置<jmq:listener />，拉取的速度由用户控制，调用一次拉取一次消息进行消费，用户自己启用多线程控制并行度。
+method: pull(String topic,MessageListener listener)
+
+支持两阶段事务
+
+支持业务ID顺序消费
+
+严格顺序消费  只允许生产者一台实例发送，也只会消费者一台实例收到消息
+            不支持重试，所以消费者在遇到消息消费失败并且此消息不需要重传时一定要处理好（判断是该舍弃还是需要重传，如果该舍弃的没舍弃那此消息会一直重复不断的推送给消费者，这样就会造成后边消息无法消费）
+不严格顺序消费
+    需要保证顺序的消息之间businessId保证一致
+
+
+支持广播模式，广播模式也不支持重试
+
+
+支持暂停消费，暂停消费只能用于紧急情况，如果长时间暂停会导致消息积压，服务端消息文件无法删除，磁盘会被写满
