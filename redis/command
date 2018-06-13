@@ -1,0 +1,56 @@
+TYPE  返回数据库键对应的值对象的类型，而不是键对象的类型
+OBJECT ENCODING 查看一个数据库键的值对象的编码  linkedlist 双端链表  ziplist压缩列表  
+EXPIRE
+RENAME
+DEL
+
+字符串
+SET
+GET
+STRLEN  
+APPEND
+SETRANGE
+GETRANGE
+INCRBY
+INCRBYFLOAT
+
+列表
+LPUSH
+LPOP
+RPUSH
+RPOP
+LINDEX
+LLEN
+LINSERT
+LREM
+LTRIM
+LSET
+
+哈希
+HSET
+HGET
+HEXISTS
+HDEL
+HLEN
+HGETALL
+
+
+集合
+SADD
+SCARD    数量
+SISMEMBER     exist
+SMEMBERS  返回所有元素
+SRANDMEMBER 随机返回一个元素
+SPOP
+SREM  删除所有给定元素
+
+有序集合
+ZADD
+ZCARD  数量
+ZCOUNT  统计分值在给定范围内的节点数量
+ZRANGE 返回给定索引范围内的所有元素
+ZREVRANGE
+ZRANK  排名
+ZREVRANK
+ZREM
+ZSCORE  分值
