@@ -1,8 +1,16 @@
 TYPE  返回数据库键对应的值对象的类型，而不是键对象的类型
 OBJECT ENCODING 查看一个数据库键的值对象的编码  linkedlist 双端链表  ziplist压缩列表  
-EXPIRE
+EXPIRE   秒 PEXPIRE 毫秒  
+TTL PTTL
+EXPIREAT   PEXPIREAT   实际上 EXPIRE,PEXPIRE,EXPIREAT都是使用PEXPIREAT实现的
 RENAME
 DEL
+FLUSHDB
+DBSIZE
+KEYS
+EXISTS
+
+
 
 字符串
 SET
@@ -13,6 +21,7 @@ SETRANGE
 GETRANGE
 INCRBY
 INCRBYFLOAT
+SETEX
 
 列表
 LPUSH
